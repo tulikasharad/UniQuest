@@ -1,7 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { useNavigate } from "react-router";
 import {
   GraduationCap,
@@ -21,7 +19,8 @@ import {
   Clock,
   User,
 } from "lucide-react";
-import type { Id } from "@/convex/_generated/dataModel";
+
+const API_URL = "http://localhost:5000/api";
 
 const CATEGORIES = [
   { value: "all", label: "All", icon: Bell },
@@ -41,6 +40,16 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 type Category = "events" | "internships" | "academics" | "hackathons" | "general";
+
+interface Notice {
+  _id: string;
+  title: string;
+  description: string;
+  category: string;
+  userId: string;
+  authorName: string;
+  createdAt: number;
+}
 
 function formatDate(timestamp: number) {
   const date = new Date(timestamp);
@@ -66,32 +75,49 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   // State
+  const [notices, setNotices] = useState<Notice[]>([]);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingNotice, setEditingNotice] = useState<any>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<Id<"notices"> | null>(null);
+  const [editingNotice, setEditingNotice] = useState<Notice | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Form state for create/edit
+  // Form state
   const [formTitle, setFormTitle] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formCategory, setFormCategory] = useState<Category>("general");
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Query notices
-  const notices = useQuery(api.notices.list, {
-    category: activeCategory === "all" ? undefined : (activeCategory as Category),
-    search: search.trim() || undefined,
-  });
+  // Fetch notices from Express API
+  const fetchNotices = async () => {
+    try {
+      setIsLoading(true);
+      const params = new URLSearchParams();
+      if (activeCategory !== "all") params.append("category", activeCategory);
+      if (search.trim()) params.append("search", search.trim());
 
-  // Mutations
-  const createNotice = useMutation(api.notices.create);
-  const updateNotice = useMutation(api.notices.update);
-  const deleteNotice = useMutation(api.notices.remove);
+      const url = `${API_URL}/notices${params.toString() ? `?${params}` : ""}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch notices");
+      const data = await response.json();
+      setNotices(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load notices");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  const handleSignOut = async () => {
-    await signOut();
+  useEffect(() => {
+    fetchNotices();
+  }, [activeCategory, search]);
+
+  const handleSignOut = () => {
+    signOut();
     navigate("/");
   };
 
@@ -103,22 +129,19 @@ export default function Dashboard() {
     setFormError("");
   };
 
-  // Open create modal
   const openCreateModal = () => {
     resetForm();
     setShowCreateModal(true);
   };
 
-  // Open edit modal
-  const openEditModal = (notice: any) => {
+  const openEditModal = (notice: Notice) => {
     setEditingNotice(notice);
     setFormTitle(notice.title);
     setFormDescription(notice.description);
-    setFormCategory(notice.category);
+    setFormCategory(notice.category as Category);
     setFormError("");
   };
 
-  // Close modals
   const closeModals = () => {
     setShowCreateModal(false);
     setEditingNotice(null);
@@ -141,16 +164,27 @@ export default function Dashboard() {
 
     setIsSubmitting(true);
     try {
-      await createNotice({
-        title: formTitle.trim(),
-        description: formDescription.trim(),
-        category: formCategory,
+      const response = await fetch(`${API_URL}/notices`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: formTitle.trim(),
+          description: formDescription.trim(),
+          category: formCategory,
+          userId: user?._id || "anonymous",
+          authorName: user?.name || "Anonymous",
+        }),
       });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to create notice");
+      }
+
       closeModals();
+      fetchNotices();
     } catch (err) {
-      setFormError(
-        err instanceof Error ? err.message : "Failed to create notice.",
-      );
+      setFormError(err instanceof Error ? err.message : "Failed to create notice.");
     } finally {
       setIsSubmitting(false);
     }
@@ -172,27 +206,43 @@ export default function Dashboard() {
 
     setIsSubmitting(true);
     try {
-      await updateNotice({
-        noticeId: editingNotice._id,
-        title: formTitle.trim(),
-        description: formDescription.trim(),
-        category: formCategory,
+      const response = await fetch(`${API_URL}/notices/${editingNotice?._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: formTitle.trim(),
+          description: formDescription.trim(),
+          category: formCategory,
+          userId: user?._id,
+        }),
       });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to update notice");
+      }
+
       closeModals();
+      fetchNotices();
     } catch (err) {
-      setFormError(
-        err instanceof Error ? err.message : "Failed to update notice.",
-      );
+      setFormError(err instanceof Error ? err.message : "Failed to update notice.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   // Handle delete
-  const handleDelete = async (noticeId: Id<"notices">) => {
+  const handleDelete = async (noticeId: string) => {
     try {
-      await deleteNotice({ noticeId });
+      const response = await fetch(`${API_URL}/notices/${noticeId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?._id }),
+      });
+
+      if (!response.ok) throw new Error("Failed to delete notice");
       setDeleteConfirm(null);
+      fetchNotices();
     } catch (err) {
       console.error("Delete failed:", err);
     }
@@ -210,7 +260,7 @@ export default function Dashboard() {
               <GraduationCap className="w-4 h-4" />
             </div>
             <span className="text-lg font-bold tracking-tight hidden sm:block">
-              CampusConnect
+              UniQuest
             </span>
           </div>
 
@@ -292,8 +342,21 @@ export default function Dashboard() {
           ))}
         </div>
 
+        {/* Error State */}
+        {error && (
+          <div className="clay text-center py-12 px-6 mb-6">
+            <p className="text-destructive font-medium mb-2">⚠️ {error}</p>
+            <button
+              className="clay-btn-primary px-4 py-2 text-sm font-bold"
+              onClick={fetchNotices}
+            >
+              Try Again
+            </button>
+          </div>
+        )}
+
         {/* Loading State */}
-        {notices === undefined && (
+        {isLoading && (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
             <p className="text-muted-foreground font-medium">
@@ -303,7 +366,7 @@ export default function Dashboard() {
         )}
 
         {/* Empty State */}
-        {notices !== undefined && notices.length === 0 && (
+        {!isLoading && notices.length === 0 && (
           <div className="clay text-center py-16 px-8">
             <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
               <FileText className="w-8 h-8 text-muted-foreground" />
@@ -327,7 +390,7 @@ export default function Dashboard() {
         )}
 
         {/* Post Cards Grid */}
-        {notices !== undefined && notices.length > 0 && (
+        {!isLoading && notices.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {notices.map((notice) => (
               <div key={notice._id} className="clay-post">
@@ -418,7 +481,6 @@ export default function Dashboard() {
           }}
         >
           <div className="clay w-full max-w-lg p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-extrabold">
                 {editingNotice ? "Edit Notice" : "Create Notice"}
@@ -431,10 +493,8 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {/* Form */}
             <form onSubmit={editingNotice ? handleEdit : handleCreate}>
               <div className="space-y-4">
-                {/* Title */}
                 <div>
                   <label className="block text-sm font-semibold mb-2">
                     Title *
@@ -449,7 +509,6 @@ export default function Dashboard() {
                   />
                 </div>
 
-                {/* Category */}
                 <div>
                   <label className="block text-sm font-semibold mb-2">
                     Category *
@@ -467,7 +526,6 @@ export default function Dashboard() {
                   </select>
                 </div>
 
-                {/* Description */}
                 <div>
                   <label className="block text-sm font-semibold mb-2">
                     Description *
@@ -485,14 +543,12 @@ export default function Dashboard() {
                   </p>
                 </div>
 
-                {/* Error */}
                 {formError && (
                   <div className="clay-inset p-3 text-sm text-destructive font-medium">
                     {formError}
                   </div>
                 )}
 
-                {/* Actions */}
                 <div className="flex gap-3 pt-2">
                   <button
                     type="submit"

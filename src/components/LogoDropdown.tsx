@@ -1,5 +1,3 @@
-// simple logo dropdown component that can be used to go to the landing page or sign out for the user
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,13 +15,9 @@ export function LogoDropdown() {
   const { isAuthenticated, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate("/");
-    } catch (error) {
-      console.error("Sign out error:", error);
-    }
+  const handleSignOut = () => {
+    signOut();
+    navigate("/");
   };
 
   const handleGoHome = () => {

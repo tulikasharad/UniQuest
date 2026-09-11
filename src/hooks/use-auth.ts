@@ -1,14 +1,44 @@
-import { api } from "@/convex/_generated/api";
-import { useAuthActions } from "@convex-dev/auth/react";
-import { useConvexAuth, useQuery } from "convex/react";
+import { useState, useEffect } from "react";
 
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+}
+
+/**
+ * Simple auth hook using localStorage.
+ * For now, provides a basic logged-in/logged-out state.
+ * Real authentication will be added later with Express + JWT.
+ */
 export function useAuth() {
-  const { isLoading: isAuthLoading, isAuthenticated } = useConvexAuth();
-  const user = useQuery(api.users.currentUser);
-  const { signIn, signOut } = useAuthActions();
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Derive isLoading directly from the dependencies instead of managing separate state
-  const isLoading = isAuthLoading || user === undefined;
+  useEffect(() => {
+    // Check if user is stored in localStorage
+    const stored = localStorage.getItem("uniquest_user");
+    if (stored) {
+      try {
+        setUser(JSON.parse(stored));
+      } catch {
+        localStorage.removeItem("uniquest_user");
+      }
+    }
+    setIsLoading(false);
+  }, []);
+
+  const isAuthenticated = user !== null;
+
+  const signIn = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem("uniquest_user", JSON.stringify(userData));
+  };
+
+  const signOut = () => {
+    setUser(null);
+    localStorage.removeItem("uniquest_user");
+  };
 
   return {
     isLoading,
