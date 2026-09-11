@@ -1,0 +1,382 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 1rem;
+  --background: #e8e0f0;
+  --foreground: #2d2040;
+  --card: #f0e8f8;
+  --card-foreground: #2d2040;
+  --popover: #f0e8f8;
+  --popover-foreground: #2d2040;
+  --primary: #7c5cbf;
+  --primary-foreground: #ffffff;
+  --secondary: #c4b5e0;
+  --secondary-foreground: #2d2040;
+  --muted: #ddd5eb;
+  --muted-foreground: #6b5c8a;
+  --accent: #f0c8d8;
+  --accent-foreground: #2d2040;
+  --destructive: #d94f4f;
+  --border: #d0c5e2;
+  --input: #d0c5e2;
+  --ring: #7c5cbf;
+  --chart-1: #7c5cbf;
+  --chart-2: #5cbf8a;
+  --chart-3: #bf8a5c;
+  --chart-4: #5c9fbf;
+  --chart-5: #bf5c8a;
+  --sidebar: #f0e8f8;
+  --sidebar-foreground: #2d2040;
+  --sidebar-primary: #7c5cbf;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ddd5eb;
+  --sidebar-accent-foreground: #2d2040;
+  --sidebar-border: #d0c5e2;
+  --sidebar-ring: #7c5cbf;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+  }
+  button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    cursor: pointer;
+  }
+}
+
+/* ============================
+   Claymorphism Theme Styles
+   ============================ */
+
+/* Base clay card style */
+.clay {
+  background: #f0e8f8;
+  border-radius: 1.5rem;
+  box-shadow:
+    8px 8px 16px #c4b8d4,
+    -8px -8px 16px #ffffff,
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Inset / pressed clay effect */
+.clay-inset {
+  background: linear-gradient(145deg, #e0d8ee, #eae2f4);
+  border-radius: 1rem;
+  box-shadow:
+    inset 4px 4px 8px #c4b8d4,
+    inset -4px -4px 8px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Raised clay button */
+.clay-btn {
+  background: linear-gradient(145deg, #f8f0ff, #e0d8ee);
+  border-radius: 1rem;
+  box-shadow:
+    6px 6px 12px #c4b8d4,
+    -6px -6px 12px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.clay-btn:hover {
+  box-shadow:
+    4px 4px 8px #c4b8d4,
+    -4px -4px 8px #ffffff;
+}
+
+.clay-btn:active {
+  box-shadow:
+    inset 3px 3px 6px #c4b8d4,
+    inset -3px -3px 6px #ffffff;
+}
+
+/* Primary clay button */
+.clay-btn-primary {
+  background: linear-gradient(145deg, #8a6acc, #6e4ca8);
+  color: #ffffff;
+  border-radius: 1rem;
+  box-shadow:
+    6px 6px 12px #c4b8d4,
+    -6px -6px 12px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.clay-btn-primary:hover {
+  background: linear-gradient(145deg, #9678d4, #7c5cbf);
+  box-shadow:
+    4px 4px 8px #c4b8d4,
+    -4px -4px 8px #ffffff;
+}
+
+.clay-btn-primary:active {
+  box-shadow:
+    inset 3px 3px 6px rgba(0, 0, 0, 0.2),
+    inset -3px -3px 6px rgba(255, 255, 255, 0.1);
+}
+
+/* Destructive clay button */
+.clay-btn-danger {
+  background: linear-gradient(145deg, #e06060, #c04040);
+  color: #ffffff;
+  border-radius: 1rem;
+  box-shadow:
+    6px 6px 12px #c4b8d4,
+    -6px -6px 12px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.clay-btn-danger:hover {
+  background: linear-gradient(145deg, #e87070, #d05050);
+  box-shadow:
+    4px 4px 8px #c4b8d4,
+    -4px -4px 8px #ffffff;
+}
+
+/* Clay input */
+.clay-input {
+  background: linear-gradient(145deg, #e8e0f0, #f4ecff);
+  border-radius: 1rem;
+  box-shadow:
+    inset 3px 3px 6px #c4b8d4,
+    inset -3px -3px 6px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.75rem 1.25rem;
+  color: #2d2040;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.clay-input::placeholder {
+  color: #9a8bb5;
+}
+
+.clay-input:focus {
+  box-shadow:
+    inset 3px 3px 6px #b8a8d0,
+    inset -3px -3px 6px #ffffff,
+    0 0 0 3px rgba(124, 92, 191, 0.3);
+}
+
+/* Clay textarea */
+.clay-textarea {
+  background: linear-gradient(145deg, #e8e0f0, #f4ecff);
+  border-radius: 1rem;
+  box-shadow:
+    inset 3px 3px 6px #c4b8d4,
+    inset -3px -3px 6px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.75rem 1.25rem;
+  color: #2d2040;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.15s ease;
+  width: 100%;
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+}
+
+.clay-textarea::placeholder {
+  color: #9a8bb5;
+}
+
+.clay-textarea:focus {
+  box-shadow:
+    inset 3px 3px 6px #b8a8d0,
+    inset -3px -3px 6px #ffffff,
+    0 0 0 3px rgba(124, 92, 191, 0.3);
+}
+
+/* Clay select */
+.clay-select {
+  background: linear-gradient(145deg, #e8e0f0, #f4ecff);
+  border-radius: 1rem;
+  box-shadow:
+    inset 3px 3px 6px #c4b8d4,
+    inset -3px -3px 6px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.75rem 1.25rem;
+  color: #2d2040;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.15s ease;
+  width: 100%;
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b5c8a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+}
+
+.clay-select:focus {
+  box-shadow:
+    inset 3px 3px 6px #b8a8d0,
+    inset -3px -3px 6px #ffffff,
+    0 0 0 3px rgba(124, 92, 191, 0.3);
+}
+
+/* Category pills */
+.clay-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.85rem;
+  border-radius: 2rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow:
+    3px 3px 6px #c4b8d4,
+    -3px -3px 6px #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  transition: all 0.15s ease;
+}
+
+.clay-pill-events {
+  background: linear-gradient(145deg, #e8d0f8, #d8b8f0);
+  color: #6a2d9a;
+}
+
+.clay-pill-internships {
+  background: linear-gradient(145deg, #d0f0e0, #b8e8d0);
+  color: #1a7a4a;
+}
+
+.clay-pill-academics {
+  background: linear-gradient(145deg, #d0e8f8, #b8daf0);
+  color: #1a5a8a;
+}
+
+.clay-pill-hackathons {
+  background: linear-gradient(145deg, #f8e0d0, #f0d0b8);
+  color: #8a4a1a;
+}
+
+.clay-pill-general {
+  background: linear-gradient(145deg, #e8e0f0, #d8d0e8);
+  color: #5a4a7a;
+}
+
+/* Clay card for posts */
+.clay-post {
+  background: #f0e8f8;
+  border-radius: 1.5rem;
+  box-shadow:
+    8px 8px 16px #c4b8d4,
+    -8px -8px 16px #ffffff,
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+}
+
+.clay-post:hover {
+  box-shadow:
+    10px 10px 20px #c4b8d4,
+    -10px -10px 20px #ffffff,
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transform: translateY(-2px);
+}
+
+/* Clay navbar */
+.clay-nav {
+  background: #f0e8f8;
+  box-shadow:
+    0 4px 12px #c4b8d4,
+    0 -2px 8px #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Modal overlay */
+.clay-overlay {
+  background: rgba(45, 32, 64, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+/* Gradient backgrounds */
+.clay-gradient-hero {
+  background: linear-gradient(135deg, #e8e0f0 0%, #f0e0f0 25%, #e0e8f8 50%, #f0e8e0 75%, #e8e0f0 100%);
+}
+
+.clay-gradient-accent {
+  background: linear-gradient(135deg, #c4b5e0 0%, #e8c0d8 50%, #c0d8e8 100%);
+}
+
+/* Floating shapes for landing page */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+@keyframes float-delayed {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(-3deg); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 5s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.animate-float-slow {
+  animation: float 8s ease-in-out infinite;
+  animation-delay: 2s;
+}
