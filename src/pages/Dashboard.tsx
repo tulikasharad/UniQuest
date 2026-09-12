@@ -20,7 +20,7 @@ import {
   User,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "http://localhost:5001/api";
 
 const CATEGORIES = [
   { value: "all", label: "All", icon: Bell },
@@ -48,11 +48,11 @@ interface Notice {
   category: string;
   userId: string;
   authorName: string;
-  createdAt: number;
+  createdAt: string;
 }
 
-function formatDate(timestamp: number) {
-  const date = new Date(timestamp);
+function formatDate(dateString: string) {
+  const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
@@ -71,7 +71,7 @@ function formatDate(timestamp: number) {
 }
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, getToken } = useAuth();
   const navigate = useNavigate();
 
   // State
@@ -99,7 +99,7 @@ export default function Dashboard() {
       if (activeCategory !== "all") params.append("category", activeCategory);
       if (search.trim()) params.append("search", search.trim());
 
-      const url = `${API_URL}/notices${params.toString() ? `?${params}` : ""}`;
+      const url = `${API_URL}/posts${params.toString() ? `?${params}` : ""}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch notices");
       const data = await response.json();
@@ -114,6 +114,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchNotices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCategory, search]);
 
   const handleSignOut = () => {
@@ -164,15 +165,17 @@ export default function Dashboard() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`${API_URL}/notices`, {
+      const token = getToken();
+      const response = await fetch(`${API_URL}/posts`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           title: formTitle.trim(),
           description: formDescription.trim(),
           category: formCategory,
-          userId: user?._id || "anonymous",
-          authorName: user?.name || "Anonymous",
         }),
       });
 
@@ -206,14 +209,17 @@ export default function Dashboard() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`${API_URL}/notices/${editingNotice?._id}`, {
+      const token = getToken();
+      const response = await fetch(`${API_URL}/posts/${editingNotice?._id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           title: formTitle.trim(),
           description: formDescription.trim(),
           category: formCategory,
-          userId: user?._id,
         }),
       });
 
@@ -234,10 +240,13 @@ export default function Dashboard() {
   // Handle delete
   const handleDelete = async (noticeId: string) => {
     try {
-      const response = await fetch(`${API_URL}/notices/${noticeId}`, {
+      const token = getToken();
+      const response = await fetch(`${API_URL}/posts/${noticeId}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user?._id }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       });
 
       if (!response.ok) throw new Error("Failed to delete notice");

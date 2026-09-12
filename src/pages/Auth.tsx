@@ -1,7 +1,18 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, Mail, ArrowRight, GraduationCap, UserX } from "lucide-react";
+import {
+  Loader2,
+  Mail,
+  Lock,
+  ArrowRight,
+  GraduationCap,
+  User,
+  UserPlus,
+  LogIn,
+} from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
+
+const API_URL = "http://localhost:5001/api";
 
 interface AuthProps {
   redirectAfterAuth?: string;
@@ -25,8 +36,12 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     searchParams.get("returnTo"),
     redirectAfterAuth,
   );
+
+  // Form state
+  const [isLogin, setIsLogin] = useState(true);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,41 +55,73 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     e.preventDefault();
     setError(null);
 
-    if (!name.trim() || !email.trim()) {
-      setError("Name and email are required.");
+    if (!email.trim() || !password.trim()) {
+      setError("Email and password are required.");
       return;
     }
 
     setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
 
-    // Simulate a brief loading delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+      const data = await response.json();
 
-    // Store user in localStorage via useAuth hook
-    signIn({
-      _id: `user_${Date.now()}`,
-      name: name.trim(),
-      email: email.trim(),
-    });
+      if (!response.ok) {
+        throw new Error(data.message || "Login failed");
+      }
 
-    setIsLoading(false);
-    navigate(redirect);
+      signIn(data.user, data.token);
+      navigate(redirect);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGuestLogin = async () => {
-    setIsLoading(true);
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      setError("All fields are required.");
+      return;
+    }
 
-    signIn({
-      _id: `guest_${Date.now()}`,
-      name: "Guest Student",
-      email: "guest@campus.edu",
-    });
+    if (password.trim().length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
 
-    setIsLoading(false);
-    navigate(redirect);
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          password: password.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Registration failed");
+      }
+
+      signIn(data.user, data.token);
+      navigate(redirect);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -104,72 +151,159 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                 <GraduationCap className="w-8 h-8 text-white" />
               </div>
               <h1 className="text-2xl font-extrabold tracking-tight">
-                Welcome Back
+                {isLogin ? "Welcome Back" : "Join UniQuest"}
               </h1>
               <p className="text-muted-foreground mt-2 text-sm">
-                Sign in to access your campus notice board
+                {isLogin
+                  ? "Sign in to access your campus notice board"
+                  : "Create an account to start posting"}
               </p>
             </div>
 
             {/* Login Form */}
-            <form onSubmit={handleLogin}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-2">
-                    Your Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Alex Johnson"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="clay-input"
-                    disabled={isLoading}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="email"
-                      placeholder="you@college.edu"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="clay-input pl-11"
-                      disabled={isLoading}
-                    />
+            {isLogin ? (
+              <form onSubmit={handleLogin}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        type="email"
+                        placeholder="you@college.edu"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="clay-input pl-11"
+                        disabled={isLoading}
+                      />
+                    </div>
                   </div>
-                </div>
 
-                {error && (
-                  <div className="clay-inset p-3 text-sm text-destructive font-medium">
-                    {error}
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        type="password"
+                        placeholder="Your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="clay-input pl-11"
+                        disabled={isLoading}
+                      />
+                    </div>
                   </div>
-                )}
 
-                <button
-                  type="submit"
-                  className="clay-btn-primary w-full py-3.5 text-base font-bold flex items-center justify-center gap-2"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Signing In...
-                    </>
-                  ) : (
-                    <>
-                      Continue
-                      <ArrowRight className="w-5 h-5" />
-                    </>
+                  {error && (
+                    <div className="clay-inset p-3 text-sm text-destructive font-medium">
+                      {error}
+                    </div>
                   )}
-                </button>
-              </div>
-            </form>
+
+                  <button
+                    type="submit"
+                    className="clay-btn-primary w-full py-3.5 text-base font-bold flex items-center justify-center gap-2"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Signing In...
+                      </>
+                    ) : (
+                      <>
+                        Sign In
+                        <LogIn className="w-5 h-5" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* Register Form */
+              <form onSubmit={handleRegister}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Full Name
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        type="text"
+                        placeholder="e.g. Alex Johnson"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="clay-input pl-11"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        type="email"
+                        placeholder="you@college.edu"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="clay-input pl-11"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Password
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <input
+                        type="password"
+                        placeholder="Min 6 characters"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="clay-input pl-11"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  {error && (
+                    <div className="clay-inset p-3 text-sm text-destructive font-medium">
+                      {error}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    className="clay-btn-primary w-full py-3.5 text-base font-bold flex items-center justify-center gap-2"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Creating Account...
+                      </>
+                    ) : (
+                      <>
+                        Create Account
+                        <UserPlus className="w-5 h-5" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
 
             {/* Divider */}
             <div className="relative my-6">
@@ -183,15 +317,27 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
               </div>
             </div>
 
-            {/* Guest Login */}
+            {/* Toggle Login/Register */}
             <button
               type="button"
               className="clay-btn w-full py-3.5 text-sm font-semibold flex items-center justify-center gap-2"
-              onClick={handleGuestLogin}
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError(null);
+              }}
               disabled={isLoading}
             >
-              <UserX className="w-4 h-4" />
-              Continue as Guest
+              {isLogin ? (
+                <>
+                  <UserPlus className="w-4 h-4" />
+                  Create a New Account
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-4 h-4" />
+                  Already have an account? Sign In
+                </>
+              )}
             </button>
           </div>
 

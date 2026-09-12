@@ -8,8 +8,7 @@ interface User {
 
 /**
  * Simple auth hook using localStorage.
- * For now, provides a basic logged-in/logged-out state.
- * Real authentication will be added later with Express + JWT.
+ * Stores the logged-in user and JWT token.
  */
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -23,6 +22,7 @@ export function useAuth() {
         setUser(JSON.parse(stored));
       } catch {
         localStorage.removeItem("uniquest_user");
+        localStorage.removeItem("uniquest_token");
       }
     }
     setIsLoading(false);
@@ -30,14 +30,20 @@ export function useAuth() {
 
   const isAuthenticated = user !== null;
 
-  const signIn = (userData: User) => {
+  const signIn = (userData: User, token: string) => {
     setUser(userData);
     localStorage.setItem("uniquest_user", JSON.stringify(userData));
+    localStorage.setItem("uniquest_token", token);
   };
 
   const signOut = () => {
     setUser(null);
     localStorage.removeItem("uniquest_user");
+    localStorage.removeItem("uniquest_token");
+  };
+
+  const getToken = (): string | null => {
+    return localStorage.getItem("uniquest_token");
   };
 
   return {
@@ -46,5 +52,6 @@ export function useAuth() {
     user,
     signIn,
     signOut,
+    getToken,
   };
 }
