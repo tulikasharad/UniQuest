@@ -483,7 +483,7 @@ export default function Dashboard() {
         {!isLoading && notices.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {notices.map((notice) => {
-              const isOwner = notice.userId === currentUserId;
+              const isOwner = String(notice.userId) === String(currentUserId);
 
               return (
                 <div key={notice._id} className="clay-post">
