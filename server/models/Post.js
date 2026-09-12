@@ -4,31 +4,42 @@ const postSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
-    trim: true,
+    trim: true
   },
   description: {
     type: String,
     required: true,
+    trim: true
   },
   category: {
     type: String,
     required: true,
-    enum: ["internship", "hackathon", "event", "academic", "club", "project", "other"],
-    default: "other",
+    enum: [
+      "internships",
+      "hackathon",
+      "events",
+      "academics",
+      "clubs",
+      "projects",
+      "general"
+    ]
+  },
+  deadline: {
+    type: Date
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
+    required: true
   },
   authorName: {
     type: String,
-    required: true,
+    required: true
   },
   createdAt: {
     type: Date,
-    default: Date.now,
-  },
+    default: Date.now
+  }
 });
 
 module.exports = mongoose.model("Post", postSchema);

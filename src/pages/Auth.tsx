@@ -149,14 +149,14 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                     </label>
 
                     <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
 
                       <input
                         type="text"
                         value={name}
                         onChange={(event) => setName(event.target.value)}
                         placeholder="Enter your name"
-                        className="clay-input pl-11"
+                        className="clay-input !pl-12"
                         disabled={isLoading}
                         required
                       />
@@ -170,14 +170,14 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                   </label>
 
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
 
                     <input
                       type="email"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                       placeholder="you@college.edu"
-                      className="clay-input pl-11"
+                      className="clay-input !pl-12"
                       disabled={isLoading}
                       required
                     />
@@ -190,14 +190,14 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                   </label>
 
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
 
                     <input
                       type="password"
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
                       placeholder="Enter your password"
-                      className="clay-input pl-11"
+                      className="clay-input !pl-12"
                       disabled={isLoading}
                       required
                     />

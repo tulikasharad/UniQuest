@@ -139,9 +139,13 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetchNotices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCategory, search]);
+  const loadNotices = async () => {
+    await fetchNotices();
+  };
+
+  loadNotices();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [activeCategory, search]);
 
   const handleSignOut = () => {
     signOut();
