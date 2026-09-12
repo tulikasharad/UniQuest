@@ -16,6 +16,7 @@ import {
   Users,
   FolderGit2,
   Megaphone,
+  Heart,
   Loader2,
   FileText,
   Clock,
@@ -55,6 +56,17 @@ interface Notice {
   userId: string;
   authorName: string;
   createdAt: string;
+  likeCount: number;
+  likedByUser: boolean;
+}
+
+/**
+ * Get the user's ID, handling both _id and id fields
+ * from the backend response.
+ */
+function getUserId(user: { _id?: string; id?: string } | null | undefined): string | undefined {
+  if (!user) return undefined;
+  return user._id || user.id;
 }
 
 function formatDate(dateString: string) {
@@ -79,6 +91,7 @@ function formatDate(dateString: string) {
 export default function Dashboard() {
   const { user, signOut, getToken } = useAuth();
   const navigate = useNavigate();
+  const currentUserId = getUserId(user);
 
   // State
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -89,6 +102,10 @@ export default function Dashboard() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Per-post action loading states
+  const [likingPostId, setLikingPostId] = useState<string | null>(null);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
 
   // Form state
   const [formTitle, setFormTitle] = useState("");
@@ -106,7 +123,10 @@ export default function Dashboard() {
       if (search.trim()) params.append("search", search.trim());
 
       const url = `${API_URL}/posts${params.toString() ? `?${params}` : ""}`;
-      const response = await fetch(url);
+      const token = getToken();
+      const response = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (!response.ok) throw new Error("Failed to fetch notices");
       const data = await response.json();
       setNotices(data);
@@ -153,6 +173,44 @@ export default function Dashboard() {
     setShowCreateModal(false);
     setEditingNotice(null);
     resetForm();
+  };
+
+  // Handle like toggle
+  const handleLike = async (noticeId: string) => {
+    if (!getToken()) return; // Must be logged in to like
+    if (likingPostId) return; // Prevent rapid clicks
+
+    setLikingPostId(noticeId);
+    try {
+      const token = getToken();
+      const response = await fetch(`${API_URL}/posts/${noticeId}/like`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to like post");
+      }
+
+      const data = await response.json();
+
+      // Update the post in the local state
+      setNotices((prev) =>
+        prev.map((n) =>
+          n._id === noticeId
+            ? { ...n, likedByUser: data.likedByUser, likeCount: data.likeCount }
+            : n,
+        ),
+      );
+    } catch (err) {
+      console.error("Like failed:", err);
+    } finally {
+      setLikingPostId(null);
+    }
   };
 
   // Handle create
@@ -253,6 +311,9 @@ export default function Dashboard() {
 
   // Handle delete
   const handleDelete = async (noticeId: string) => {
+    if (deletingPostId) return; // Prevent rapid clicks
+
+    setDeletingPostId(noticeId);
     try {
       const token = getToken();
       const response = await fetch(`${API_URL}/posts/${noticeId}`, {
@@ -268,6 +329,8 @@ export default function Dashboard() {
       fetchNotices();
     } catch (err) {
       console.error("Delete failed:", err);
+    } finally {
+      setDeletingPostId(null);
     }
   };
 
@@ -415,82 +478,127 @@ export default function Dashboard() {
         {/* Post Cards Grid */}
         {!isLoading && notices.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {notices.map((notice) => (
-              <div key={notice._id} className="clay-post">
-                {/* Header */}
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <span
-                    className={`clay-pill text-xs ${CATEGORY_COLORS[notice.category] || "clay-pill-general"}`}
-                  >
-                    {notice.category.charAt(0).toUpperCase() +
-                      notice.category.slice(1)}
-                  </span>
-                  {notice.userId === user?._id && (
-                    <div className="flex items-center gap-1.5">
+            {notices.map((notice) => {
+              const isOwner = notice.userId === currentUserId;
+
+              return (
+                <div key={notice._id} className="clay-post">
+                  {/* Header — category badge */}
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <span
+                      className={`clay-pill text-xs ${CATEGORY_COLORS[notice.category] || "clay-pill-general"}`}
+                    >
+                      {notice.category.charAt(0).toUpperCase() +
+                        notice.category.slice(1)}
+                    </span>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-base font-bold mb-2 leading-snug">
+                    {notice.title}
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-3">
+                    {notice.description}
+                  </p>
+
+                  {/* Footer — author and date */}
+                  <div className="flex items-center gap-4 text-xs text-muted-foreground pt-3 border-t border-border/50">
+                    <span className="flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5" />
+                      {notice.authorName}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
+                      {formatDate(notice.createdAt)}
+                    </span>
+                  </div>
+
+                  {/* Action buttons — visible on every card */}
+                  <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/50">
+                    {/* Like Button — visible to everyone */}
+                    <button
+                      className={`clay-btn px-3 py-2 text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                        notice.likedByUser
+                          ? "ring-2 ring-pink-400 text-pink-500"
+                          : ""
+                      }`}
+                      onClick={() => handleLike(notice._id)}
+                      disabled={likingPostId === notice._id || !getToken()}
+                      title={!getToken() ? "Login to like" : notice.likedByUser ? "Unlike" : "Like"}
+                    >
+                      {likingPostId === notice._id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Heart
+                          className={`w-3.5 h-3.5 ${
+                            notice.likedByUser ? "fill-pink-500" : ""
+                          }`}
+                        />
+                      )}
+                      <span>{notice.likeCount || 0}</span>
+                    </button>
+
+                    {/* Edit Button — owner only */}
+                    {isOwner && (
                       <button
-                        className="clay-btn p-2 rounded-lg"
+                        className="clay-btn px-3 py-2 text-xs font-semibold flex items-center gap-1.5"
                         onClick={() => openEditModal(notice)}
                         title="Edit notice"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
+                        <span>Edit</span>
                       </button>
+                    )}
+
+                    {/* Delete Button — owner only */}
+                    {isOwner && (
                       <button
-                        className="clay-btn-danger px-2.5 py-2 rounded-lg"
+                        className="clay-btn-danger px-3 py-2 text-xs font-semibold flex items-center gap-1.5"
                         onClick={() => setDeleteConfirm(notice._id)}
                         title="Delete notice"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete</span>
                       </button>
+                    )}
+                  </div>
+
+                  {/* Delete Confirmation */}
+                  {deleteConfirm === notice._id && (
+                    <div className="clay-inset mt-3 p-3">
+                      <p className="text-sm font-medium mb-3">
+                        Delete this notice?
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          className="clay-btn-danger px-4 py-2 text-xs font-bold flex-1 flex items-center justify-center gap-1.5"
+                          onClick={() => handleDelete(notice._id)}
+                          disabled={deletingPostId === notice._id}
+                        >
+                          {deletingPostId === notice._id ? (
+                            <>
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            "Yes, Delete"
+                          )}
+                        </button>
+                        <button
+                          className="clay-btn px-4 py-2 text-xs font-bold flex-1"
+                          onClick={() => setDeleteConfirm(null)}
+                          disabled={deletingPostId === notice._id}
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
-
-                {/* Title */}
-                <h3 className="text-base font-bold mb-2 leading-snug">
-                  {notice.title}
-                </h3>
-
-                {/* Description */}
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-3">
-                  {notice.description}
-                </p>
-
-                {/* Footer */}
-                <div className="flex items-center gap-4 text-xs text-muted-foreground pt-3 border-t border-border/50">
-                  <span className="flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5" />
-                    {notice.authorName}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5" />
-                    {formatDate(notice.createdAt)}
-                  </span>
-                </div>
-
-                {/* Delete Confirmation */}
-                {deleteConfirm === notice._id && (
-                  <div className="clay-inset mt-4 p-3">
-                    <p className="text-sm font-medium mb-3">
-                      Delete this notice?
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        className="clay-btn-danger px-4 py-2 text-xs font-bold flex-1"
-                        onClick={() => handleDelete(notice._id)}
-                      >
-                        Yes, Delete
-                      </button>
-                      <button
-                        className="clay-btn px-4 py-2 text-xs font-bold flex-1"
-                        onClick={() => setDeleteConfirm(null)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
