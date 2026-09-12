@@ -1,7 +1,5 @@
-import "@vly-ai/integrations";
 import { Toaster } from "@/components/ui/sonner";
 import { RequireAuth } from "@/components/RequireAuth";
-import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router";
@@ -16,8 +14,10 @@ const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 // Simple loading fallback
 function RouteLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-pulse text-muted-foreground">Loading...</div>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-muted-foreground font-medium animate-pulse">
+        Loading...
+      </div>
     </div>
   );
 }
@@ -25,28 +25,19 @@ function RouteLoading() {
 // Error boundary for graceful error handling
 class RootErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { hasError: boolean; message: string; stack: string }
+  { hasError: boolean; message: string }
 > {
-  state = { hasError: false, message: "", stack: "" };
+  state = { hasError: false, message: "" };
   static getDerivedStateFromError(error: Error) {
-    return {
-      hasError: true,
-      message: error.message || "Unknown runtime error",
-      stack: error.stack || "",
-    };
-  }
-  componentDidCatch(err: Error) {
-    console.error("[Root crash]", err);
+    return { hasError: true, message: error.message || "Something went wrong" };
   }
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background text-foreground p-6">
-          <div className="max-w-lg text-center">
-            <p className="text-sm font-semibold">Runtime error</p>
-            <p className="mt-2 text-xs text-muted-foreground break-words">
-              {this.state.message}
-            </p>
+        <div className="min-h-screen flex items-center justify-center bg-background p-6">
+          <div className="clay max-w-md text-center p-8">
+            <p className="text-lg font-bold mb-2">Something went wrong</p>
+            <p className="text-sm text-muted-foreground">{this.state.message}</p>
           </div>
         </div>
       );
@@ -70,29 +61,28 @@ function RouteSyncer() {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RootErrorBoundary>
-      <VlyToolbar />
-      <BrowserRouter>
-        <RouteSyncer />
-        <Suspense fallback={<RouteLoading />}>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route
-              path="/auth"
-              element={<AuthPage redirectAfterAuth="/dashboard" />}
-            />
-            <Route
-              path="/dashboard"
-              element={
-                <RequireAuth>
-                  <Dashboard />
-                </RequireAuth>
-              }
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-      <Toaster />
+        <BrowserRouter>
+          <RouteSyncer />
+          <Suspense fallback={<RouteLoading />}>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route
+                path="/auth"
+                element={<AuthPage redirectAfterAuth="/dashboard" />}
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <RequireAuth>
+                    <Dashboard />
+                  </RequireAuth>
+                }
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+        <Toaster />
     </RootErrorBoundary>
   </StrictMode>,
 );

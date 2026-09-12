@@ -5,3 +5,4 @@ src/convex/_generated
 
 # Server environment
 server/.env
+.DS_Store
