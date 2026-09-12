@@ -87,7 +87,7 @@ export default function Landing() {
               <GraduationCap className="w-5 h-5" />
             </div>
             <span className="text-xl font-bold tracking-tight">
-              CampusConnect
+              UniQuest
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -155,7 +155,7 @@ export default function Landing() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg text-muted-foreground leading-relaxed mb-10 max-w-xl mx-auto"
           >
-            CampusConnect is your one-stop college notice board for events,
+            UniQuest is your one-stop college notice board for events,
             internships, hackathons, academics, and everything campus life.
           </motion.p>
 
@@ -280,7 +280,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-6 text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <GraduationCap className="w-5 h-5 text-primary" />
-            <span className="font-bold">CampusConnect</span>
+            <span className="font-bold">UniQuest</span>
           </div>
           <p className="text-sm text-muted-foreground">
             Built for students, by students. Simple campus notice board.

@@ -55,7 +55,7 @@ router.post("/", auth, async (req, res) => {
     const post = new Post({
       title,
       description,
-      category: category || "general",
+      category: category || "other",
       userId: req.user.userId,
       authorName: req.user.name,
     });

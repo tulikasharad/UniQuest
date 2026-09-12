@@ -13,8 +13,8 @@ const postSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ["events", "internships", "academics", "hackathons", "general"],
-    default: "general",
+    enum: ["internship", "hackathon", "event", "academic", "club", "project", "other"],
+    default: "other",
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,

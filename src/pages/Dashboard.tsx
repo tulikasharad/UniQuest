@@ -9,10 +9,12 @@ import {
   X,
   Edit3,
   Trash2,
-  Bell,
   Briefcase,
   Calendar,
   Code,
+  BookOpen,
+  Users,
+  FolderGit2,
   Megaphone,
   Loader2,
   FileText,
@@ -23,23 +25,27 @@ import {
 const API_URL = "http://localhost:5001/api";
 
 const CATEGORIES = [
-  { value: "all", label: "All", icon: Bell },
-  { value: "events", label: "Events", icon: Calendar },
-  { value: "internships", label: "Internships", icon: Briefcase },
-  { value: "academics", label: "Academics", icon: GraduationCap },
-  { value: "hackathons", label: "Hackathons", icon: Code },
-  { value: "general", label: "General", icon: Megaphone },
+  { value: "all", label: "All", icon: Megaphone },
+  { value: "event", label: "Event", icon: Calendar },
+  { value: "internship", label: "Internship", icon: Briefcase },
+  { value: "hackathon", label: "Hackathon", icon: Code },
+  { value: "academic", label: "Academic", icon: BookOpen },
+  { value: "club", label: "Club", icon: Users },
+  { value: "project", label: "Project", icon: FolderGit2 },
+  { value: "other", label: "Other", icon: Megaphone },
 ] as const;
 
 const CATEGORY_COLORS: Record<string, string> = {
-  events: "clay-pill-events",
-  internships: "clay-pill-internships",
-  academics: "clay-pill-academics",
-  hackathons: "clay-pill-hackathons",
-  general: "clay-pill-general",
+  event: "clay-pill-events",
+  internship: "clay-pill-internships",
+  hackathon: "clay-pill-hackathons",
+  academic: "clay-pill-academics",
+  club: "clay-pill-general",
+  project: "clay-pill-events",
+  other: "clay-pill-general",
 };
 
-type Category = "events" | "internships" | "academics" | "hackathons" | "general";
+type Category = "event" | "internship" | "hackathon" | "academic" | "club" | "project" | "other";
 
 interface Notice {
   _id: string;
@@ -87,7 +93,7 @@ export default function Dashboard() {
   // Form state
   const [formTitle, setFormTitle] = useState("");
   const [formDescription, setFormDescription] = useState("");
-  const [formCategory, setFormCategory] = useState<Category>("general");
+  const [formCategory, setFormCategory] = useState<Category>("other");
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -126,7 +132,7 @@ export default function Dashboard() {
   const resetForm = () => {
     setFormTitle("");
     setFormDescription("");
-    setFormCategory("general");
+    setFormCategory("other");
     setFormError("");
   };
 
@@ -160,6 +166,10 @@ export default function Dashboard() {
     }
     if (!formDescription.trim()) {
       setFormError("Description is required.");
+      return;
+    }
+    if (!formCategory) {
+      setFormError("Category is required.");
       return;
     }
 
@@ -204,6 +214,10 @@ export default function Dashboard() {
     }
     if (!formDescription.trim()) {
       setFormError("Description is required.");
+      return;
+    }
+    if (!formCategory) {
+      setFormError("Category is required.");
       return;
     }
 
@@ -527,11 +541,13 @@ export default function Dashboard() {
                     onChange={(e) => setFormCategory(e.target.value as Category)}
                     className="clay-select"
                   >
-                    <option value="events">Events</option>
-                    <option value="internships">Internships</option>
-                    <option value="academics">Academics</option>
-                    <option value="hackathons">Hackathons</option>
-                    <option value="general">General</option>
+                    <option value="event">Event</option>
+                    <option value="internship">Internship</option>
+                    <option value="hackathon">Hackathon</option>
+                    <option value="academic">Academic</option>
+                    <option value="club">Club</option>
+                    <option value="project">Project</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
 
